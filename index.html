@@ -28,13 +28,20 @@
             margin-top: 20px;
             font-size: 20px;
             color: green;
+            white-space: pre-line; /* 保证结果中的换行符生效 */
         }
         .intro {
             margin-top: 40px;
             font-size: 16px;
             color: #555;
         }
+        #chartContainer {
+            width: 80%;
+            margin: 30px auto;
+        }
     </style>
+    <!-- 引入 Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -49,6 +56,11 @@
     <button onclick="checkScore()">查询分数</button>
 
     <div class="result" id="result"></div>
+
+    <!-- 用于显示柱状图的容器 -->
+    <div id="chartContainer">
+        <canvas id="scoreChart"></canvas>
+    </div>
 
     <script>
         // 数据：抖音ID、密码、分数（单位：万）和排名
@@ -77,33 +89,86 @@
                 const score = userData.score;
                 const rank = userData.rank;
 
-                let message = `${username} 的当前分数为：${score} 万分，排名第 ${rank} 位。`;
+                // 分数和排名信息
+                let message = `${username} 的当前分数为：${score} 万分\n排名第 ${rank} 位\n\n`;
 
                 // 为前五名显示个性化消息
                 if (rank === 1) {
-                    message += " 你一骑绝尘，你是女王的最爱！";
+                    message += "你一骑绝尘，你是女王的最爱！\n";
                 } else if (rank === 2) {
-                    message += " 就差一点点，你忍心将女王拱手让人吗？";
+                    message += "就差一点点，你忍心将女王拱手让人吗？\n";
                 } else if (rank === 3) {
-                    message += " 如果是现在这个位置，可能你会觉得有点拥挤哦。";
+                    message += "如果是现在这个位置，可能你会觉得有点拥挤哦。\n";
                 } else if (rank === 4) {
-                    message += " 我知道你还在努力，看到啦，请继续！";
+                    message += "我知道你还在努力，看到啦，请继续！\n";
                 } else if (rank === 5) {
-                    message += " 还有很大的提升空间，不过你已经很优秀啦！";
+                    message += "还有很大的提升空间，不过你已经很优秀啦！\n";
                 }
 
                 // 如果分数达到或超过 15 万
                 if (score >= 15) {
-                    message += " 恭喜您，已获得入群资格，请添加微信：ANGELIKA_ 欢迎加入女王一家亲！";
+                    message += "\n恭喜您，已获得入群资格\n请添加微信：ANGELIKA_ 欢迎加入女王一家亲！";
                 } else {
                     // 如果分数低于 15 万
-                    message += " 您距离成为女王的高级守护只有一步之遥啦，洗把脸，继续加油吧！";
+                    message += "\n您距离成为女王的高级守护只有一步之遥啦，洗把脸，继续加油吧！";
                 }
 
+                // 显示最终结果
                 document.getElementById("result").textContent = message;
+
+                // 绘制柱状图
+                drawChart();
             } else {
                 document.getElementById("result").textContent = "未找到您的分数信息，请检查您的抖音ID是否正确。";
             }
+        }
+
+        // 绘制柱状图，显示与第一名的分数差距
+        function drawChart() {
+            const labels = Object.keys(data); // 抖音ID列表
+            const scores = Object.values(data).map(user => user.score); // 每个用户的分数
+            const firstScore = data["柯基是狗"].score; // 第一名的分数
+
+            // 计算每个人与第一名的差距
+            const differences = scores.map(score => firstScore - score);
+
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar', // 柱状图
+                data: {
+                    labels: labels, // 横坐标显示用户的抖音ID
+                    datasets: [{
+                        label: '与第一名的分数差距（万）',
+                        data: differences, // 显示差距
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '分数差距（万）'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '抖音ID'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
         }
     </script>
 
