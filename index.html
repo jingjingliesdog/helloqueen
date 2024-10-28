@@ -57,7 +57,7 @@
 
     <div class="result" id="result"></div>
 
-    <!-- 用于显示柱状图的容器 -->
+    <!-- 用于显示雷达图的容器 -->
     <div id="chartContainer">
         <canvas id="scoreChart"></canvas>
     </div>
@@ -73,9 +73,12 @@
         };
 
         function checkScore() {
-            // 获取用户输入的抖音ID和密码
-            const username = document.getElementById("username").value.trim();
+            // 获取用户输入的抖音ID和密码，忽略大小写
+            const username = document.getElementById("username").value.trim().toLowerCase();
             const password = document.getElementById("password").value.trim();
+
+            // 查找数据时同样忽略大小写
+            const lowerData = Object.fromEntries(Object.entries(data).map(([key, value]) => [key.toLowerCase(), value]));
 
             // 验证密码是否正确
             if (password !== "1996") {
@@ -84,8 +87,8 @@
             }
 
             // 查找用户分数和排名
-            if (data[username]) {
-                const userData = data[username];
+            if (lowerData[username]) {
+                const userData = lowerData[username];
                 const score = userData.score;
                 const rank = userData.rank;
 
@@ -116,48 +119,46 @@
                 // 显示最终结果
                 document.getElementById("result").textContent = message;
 
-                // 绘制柱状图
-                drawChart();
+                // 绘制雷达图
+                drawRadarChart();
             } else {
                 document.getElementById("result").textContent = "未找到您的分数信息，请检查您的抖音ID是否正确。";
             }
         }
 
-        // 绘制柱状图，显示与第一名的分数差距
-        function drawChart() {
+        // 绘制雷达图，显示与第一名的分数差距
+        function drawRadarChart() {
             const labels = Object.keys(data); // 抖音ID列表
-            const scores = Object.values(data).map(user => user.score); // 每个用户的分数
             const firstScore = data["柯基是狗"].score; // 第一名的分数
 
-            // 计算每个人与第一名的差距
-            const differences = scores.map(score => firstScore - score);
+            // 计算每个人与第一名的分数差距比例
+            const differences = Object.values(data).map(user => firstScore - user.score);
 
             const ctx = document.getElementById('scoreChart').getContext('2d');
             new Chart(ctx, {
-                type: 'bar', // 柱状图
+                type: 'radar', // 雷达图
                 data: {
-                    labels: labels, // 横坐标显示用户的抖音ID
+                    labels: labels, // 显示抖音ID
                     datasets: [{
-                        label: '与第一名的分数差距（万）',
+                        label: '与第一名的差距',
                         data: differences, // 显示差距
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(255, 99, 132, 1)'
                     }]
                 },
                 options: {
                     scales: {
-                        y: {
+                        r: {
                             beginAtZero: true,
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMax: firstScore, // 根据第一名分数调整最大值
                             title: {
                                 display: true,
                                 text: '分数差距（万）'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: '抖音ID'
                             }
                         }
                     },
